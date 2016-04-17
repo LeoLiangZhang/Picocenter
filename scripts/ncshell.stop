@@ -1,0 +1,7 @@
+#! /bin/sh
+
+#start-stop-daemon --stop -p /tmp/nc.pid -b -x nc -- -l -p 4444 -e /bin/sh
+#start-stop-daemon --stop -p /tmp/ncshell.pid -x /etc/local.d/ncshell
+kill `cat /tmp/ncshell.pid`
+nc -z localhost 4444
+

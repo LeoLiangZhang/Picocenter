@@ -1,0 +1,64 @@
+# Copyright (c) 2011-2013, OblakSoft LLC.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# 
+#
+# Author: Artem Livshits <artem.livshits@gmail.com>
+
+
+# Defines that can be used to customize build flavor.
+
+DEFINES=
+
+#DEFINES=$(DEFINES) /DDEBUG  # use this to enable debug-only functionality
+#DEFINES=$(DEFINES) /DPERF   # use this to enable perf testing / tracing
+
+# Include paths.  The webstor library depends on the following
+# libraries:
+#
+# * curl
+# * libxml2
+# * openssl
+#
+# Modify these to reflect the layout of the libraries.
+
+#INCLUDES=/I ..\curl /I ..\openssl /I ..\libxml2
+
+# Library search paths.  Modify these correspondingly.
+
+#LIBPATHS=/link /libpath:..\curl /libpath:..\openssl /libpath:..\libxml2
+
+# Libraries to link with.
+
+LINKLIBS=libcurl.lib ssleay.lib	openssl.lib libxml2.lib
+
+### RULES ###
+
+CPPFLAGS=$(CPPFLAGS) $(DEFINES) $(INCLUDES)
+
+all: wsdbg.exe wsperf.exe wscmd.exe
+
+clean:
+	del /f/q *.obj wsdbg.exe wsperf.exe wscmd.exe webstor.lib
+
+wsdbg.exe: wsdbg.obj webstor.lib
+	cl $(CPPFLAGS) -Fe$@ $** $(LINKLIBS) $(LIBPATHS)
+
+wsperf.exe: wsperf.obj webstor.lib
+	cl $(CPPFLAGS) -Fe$@ $** $(LINKLIBS) $(LIBPATHS)
+
+wscmd.exe: wscmd.obj webstor.lib
+	cl $(CPPFLAGS) -Fe$@ $** $(LINKLIBS) $(LIBPATHS)
+
+webstor.lib: asyncurl.obj wsconn.obj sysutils.obj
+	lib /OUT:$@ $**

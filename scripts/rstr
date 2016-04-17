@@ -1,0 +1,38 @@
+#!/bin/bash
+
+PREV_STATE=$1
+PICO_ID=$2
+NAME=pico$PICO_ID
+ITERATION=$3
+#FLAGS=-v
+
+LXC_ROOT=/usr/local/var/lib/lxc/
+
+usage() { 
+  echo -e "\nRestore iteratively-checkpointed lxc from\n  /checkpoints/picoX/iteration/"
+  echo -e "\nUsage:\n  sudo rstr [warm|cold] [pico_id] [iteration#] \n"
+} 
+if [  $# -le 2 ] 
+then 
+  usage
+  exit 1
+fi 
+if [[ ( $# == "--help") ||  $# == "-h" ]] 
+then 
+  usage
+  exit 0
+fi 
+if [[ $USER != "root" ]]; then 
+  echo "This script must be run as root" 
+  exit 1
+fi 
+
+if [ "$PREV_STATE"  = "cold" ]
+then
+  sudo btrfs receive $LXC_ROOT -f /filesystems/$PICO_ID
+  sudo btrfs property set -ts $LXC_ROOT/pico$PICO_ID ro false
+  sudo mount -o bind /checkpoints $LXC_ROOT/pico$PICO_ID/rootfs/checkpoints
+fi
+
+DEST_DIR=/checkpoints/$PICO_ID/$ITERATION
+sudo lxc-checkpoint -r -n $NAME $FLAGS -D $DEST_DIR

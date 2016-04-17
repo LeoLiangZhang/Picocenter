@@ -1,0 +1,3 @@
+#!/bin/ash
+
+echo "nop"

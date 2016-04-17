@@ -1,0 +1,7 @@
+while :
+do
+  #clear
+  printf "\033c"
+  sudo lxc-ls -f
+  sleep 3
+done

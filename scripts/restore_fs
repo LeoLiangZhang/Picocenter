@@ -1,0 +1,9 @@
+#!/bin/bash
+
+LXCPATH=$1
+PICO_ID=$2
+PICO_PATH=$LXCPATH/pico$PICO_ID/
+
+sudo btrfs receive $LXCPATH -f /filesystems/$PICO_ID
+sudo btrfs property set -ts $PICO_PATH ro false
+sudo mount -o bind /checkpoints $PICO_PATH/rootfs/checkpoints

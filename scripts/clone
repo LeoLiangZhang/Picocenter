@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# EASIER
+PICO_ID=$1
+NEW_NAME=pico$PICO_ID
+IPADDR="192.168.122.$PICO_ID"
+NETMASK="255.255.255.0"
+GATEWAY="192.168.122.1"
+
+# MORE FLEXIBILE
+#NEW_NAME=$1
+#IPADDR=$2
+#NETMASK=$3
+#GATEWAY=$4
+
+SHELL=/bin/ash
+LXC_ROOT=/usr/local/var/lib/lxc/
+BASE_NAME=alpine_base
+
+NEW_ROOT=$LXC_ROOT$NEW_NAME
+BASE_ROOT=$LXC_ROOT$BASE_NAME
+
+usage() { 
+  echo -e "\nManually clone an lxc using btrfs."
+  #echo -e "\nUsage:\n$0 [name] [ip-address] [netmask] [gateway]\n" 
+  echo -e "\nUsage:\n  sudo clone [pico_id]\n"
+} 
+if [  $# -le 0 ] 
+then 
+  usage
+  exit 1
+fi 
+if [[ ( $# == "--help") ||  $# == "-h" ]] 
+then 
+  usage
+  exit 0
+fi 
+if [[ $USER != "root" ]]; then 
+  echo "This script must be run as root" 
+  exit 1
+fi 
+
+### Manually create container (thanks a lot lxc-clone)
+# New filesystem is a copy-on-write snapshot of our base filesystem
+sudo btrfs subvolume snapshot $BASE_ROOT $NEW_ROOT
+sudo btrfs property set -ts $NEW_ROOT ro false
+# Replace base name with the name of this pico container in the config
+sed -i "s/$BASE_NAME/$NEW_NAME/g" $NEW_ROOT/config
+# Bind mount the host checkpoints dir to the new container (needed so that james' criu changes work properly)
+sudo mount -o bind /checkpoints/ $NEW_ROOT/rootfs/checkpoints
+#(The checkpoints directory should already be in the new fs because we created it in the base)
+
+### Start the container and set it up with the given ip address
+# Start container as daemon
+sudo lxc-start -n $NEW_NAME -d 
+# Fix container networking config
+sudo lxc-attach -n $NEW_NAME -- sed -i "s/iface eth0 inet dhcp/iface eth0 inet static\n\taddress $IPADDR\n\tnetmask $NETMASK\n\tgateway $GATEWAY/" /etc/network/interfaces 
+# Essentially do "rc-service networking start" -- make this 16 later?? 
+sudo lxc-attach -n $NEW_NAME -- $SHELL -c "ip addr add $IPADDR/24 dev eth0 label eth0 && ip link set eth0 up && ip route add default via $GATEWAY dev eth0"
+# Networking start on boot by default
+sudo lxc-attach -n $NEW_NAME -- rc-update add networking default

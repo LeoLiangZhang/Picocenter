@@ -1,0 +1,20 @@
+CC=gcc
+CXX=g++
+#CXX=clang++
+EXT_INCLUDE=-Iext
+#O_LEVEL=-O2
+O_LEVEL=
+CFLAGS=-Wall -Wextra -Wcast-align -Iincludes $(EXT_INCLUDE) -ggdb `pkg-config fuse --cflags --libs` $(O_LEVEL)
+CXXFLAGS=-Wall -Wextra -Wcast-align -std=c++11 -Iincludes $(EXT_INCLUDE) -ggdb `pkg-config fuse --cflags --libs` $(O_LEVEL)
+VPATH=src:includes
+
+
+default: all # to be defined in children
+
+clean: clean_extra
+	rm -rf *~ includes/*~ src/*~ *.o
+
+#../shared/%.o: ../shared/src/%.cpp
+#	$(MAKE) -C ../shared $(subst ../shared/, , $@)
+
+.PHONY: all clean default clean_extra

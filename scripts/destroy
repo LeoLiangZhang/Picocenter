@@ -1,0 +1,35 @@
+#!/bin/bash
+
+PICO_ID=$1
+NAME=pico$PICO_ID
+
+LXC_ROOT=/usr/local/var/lib/lxc/
+PICO_ROOT=$LXC_ROOT$NAME
+
+usage() { 
+  echo -e "\nManually destroy an lxc backed by btrfs."
+  echo -e "\nUsage:\n  sudo destroy [pico_id]\n" 
+} 
+if [  $# -le 0 ] 
+then 
+  usage
+  exit 1
+fi 
+if [[ ( $# == "--help") ||  $# == "-h" ]] 
+then 
+  usage
+  exit 0
+fi 
+if [[ $USER != "root" ]]; then 
+  echo "This script must be run as root" 
+  exit 1
+fi 
+
+# Make sure it's not running
+sudo lxc-stop -n $NAME
+# Unmount our checkpoints directory (won't be able to delete fs otherwise)
+sudo umount $PICO_ROOT/rootfs/checkpoints
+# This deletes the container's folder in lxcpath, which is equivalent to 
+# deleting the container itself to lxc-ls 
+sudo btrfs subvolume delete $PICO_ROOT
+sudo rm -rf /checkpoints/$PICO_ID
