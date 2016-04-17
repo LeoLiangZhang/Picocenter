@@ -1,0 +1,80 @@
+pico
+====
+
+Stores information about each picoprocess currently running.
+
++-------------+--------------+------+-----+---------+----------------+
+| Field       | Type         | Null | Key | Default | Extra          |
++-------------+--------------+------+-----+---------+----------------+
+| pico_id     | int(11)      | NO   | PRI | NULL    | auto_increment |
+| hot         | tinyint(1)   | NO   |     | NULL    |                |
+| worker_id   | int(11)      | YES  |     | NULL    |                |
+| public_ip   | varchar(15)  | YES  |     | NULL    |                |
+| internal_ip | varchar(15)  | NO   |     | NULL    |                |
+| ports       | text         | NO   |     | NULL    |                |
+| hostname    | varchar(255) | NO   |     | NULL    |                |
+| customer_id | int(11)      | NO   |     | NULL    |                |
++-------------+--------------+------+-----+---------+----------------+
+
+[pico_id] -- is a unique global identifier shared with worker machines to easily
+	identify 
+[hot] -- true if currently being run on a machine, false if only in cold storage
+[worker_id] -- if hot, the id of the worker machine running it, NULL otherwise
+[public_ip] -- if hot, the public ip assigned to it, NULL OTHERWISE
+[internal_ip] -- globally unique private IP address for internal referencing 
+	by the application itself
+[ports] -- list of ";"-separated ports this application wishes to use
+[hostname] -- hostname identifying this process, may map to a different IP / 
+	worker at any given time
+[customer_id] -- which customer submitted this job
+
+
+workers
+=======
+
+Stores information about each worker machine in the picocenter.
+
++------------+------------------------------------------+------+-----+---------+----------------+
+| Field      | Type                                     | Null | Key | Default | Extra          |
++------------+------------------------------------------+------+-----+---------+----------------+
+| worker_id  | int(11)                                  | NO   | PRI | NULL    | auto_increment |
+| status     | enum('available','overloaded','offline') | NO   |     | NULL    |                |
+| heart_ip   | varchar(15)                              | NO   |     | NULL    |                |
+| heart_port | varchar(5)                               | NO   |     | NULL    |                |
++------------+------------------------------------------+------+-----+---------+----------------+
+
+[worker_id] -- unique global identifier
+[status] -- available if currently able to accept new jobs, overloaded if 
+	online but not able to accept new jobs, offline if we haven't 
+	recieved a heartbeat from this machine in X minutes 
+[heart_ip:heart_port] -- IP/port where the monitor is running on this machine
+	will be contacted for any new picoprocess requests, and will
+	recieve heartbeat messages from this address
+
+
+
+addrmap
+======
+
+Stores the mapping between worker machines and the different public IPs each 
+one manages, as well as which ports are currently in-use for each IP. 
+
++-------------------+-------------+------+-----+---------+-------+
+| Field             | Type        | Null | Key | Default | Extra |
++-------------------+-------------+------+-----+---------+-------+
+| worker_id         | int(11)     | NO   |     | NULL    |       |
+| public_ip         | varchar(15) | NO   | PRI | NULL    |       |
+| ports_allocated   | text        | NO   |     | NULL    |       |
+| port_80_allocated | tinyint(1)  | NO   |     | NULL    |       |
++-------------------+-------------+------+-----+---------+-------+
+
+[worker_id] -- link to worker table, non-unique in this table, as there is a
+	separate row for each public_ip, and workers may manage multiple
+	public ips 
+[public_ip] -- a public ip managed by this worker
+[ports_allocated] -- ";"-separated list of ports currently in-use by some 
+	picoprocess on this machine
+[port_80_allocated] -- shortcut for determining whether or not port 80 is 
+	currently in use on this machine as it will be the most commonly
+	requested port
+
